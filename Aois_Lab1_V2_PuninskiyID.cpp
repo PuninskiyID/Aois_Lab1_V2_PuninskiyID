@@ -348,12 +348,17 @@ class BinaryFloatNum
     string BinarySum(string binaryNum1, string binaryNum2);
     bool IsExpMore(string exp1, string exp2);
     void MoveNum(string &mantiss, int added);
+    void MantiissEqualize(BinaryFloatNum &num1, BinaryFloatNum &num2);
+    BinaryFloatNum MantissSum(BinaryFloatNum& num1, BinaryFloatNum& num2);
+    string MakeAdditional(string binaryNum);
+    string BinNumInverse(string binaryNum);
 
 public:
     BinaryFloatNum();
     BinaryFloatNum(float input_num);
 
     BinaryFloatNum operator+(const BinaryFloatNum& num1);
+    void operator=(const BinaryFloatNum& num1);
 };
 
 BinaryFloatNum::BinaryFloatNum()
@@ -379,28 +384,30 @@ BinaryFloatNum::BinaryFloatNum(float input_num)
         while (intPart[i] == '0')
             i++;
         for (int j = i + 1; j < intPart.size(); j++)
-            this->mantiss.push_back(intPart[i]);
-        for(int j = 0; j < 23 - this->mantiss.size(); j++)
         {
-            this->mantiss.push_back(beforePointPart[j]);
+            this->mantiss.push_back(intPart[j]);
             this->exp = BinarySum("00000001", this->exp);
         }
-        cout << this->mantiss << endl;
+        int mantissSize = this->mantiss.size();
+        for(int j = 0; j < 23 - mantissSize; j++)
+            this->mantiss.push_back(beforePointPart[j]);
+        cout << this->minus << " " << this->exp << " " << this->mantiss << endl;
     }
     else 
     {
         while (beforePointPart[i] == '0'){
             i++;
-            this->exp = BinarySum("00000001", this->exp);
+            this->exp = BinarySum("11111111", this->exp);
         }
-        this->exp = BinarySum("00000001", this->exp);
+        this->exp = BinarySum("11111111", this->exp);
         for (int j = i + 1; j < beforePointPart.size(); j++)
             this->mantiss.push_back(beforePointPart[j]);
-        for (int j = 0; j < 23 - this->mantiss.size(); j++)
+        for (int j = this->mantiss.size(); j < 23; j++)
         {
             this->mantiss.push_back('0');
         }
-        cout << this->exp << " " << this->mantiss << endl;
+
+        cout << this->minus << " " << this->exp << " " << this->mantiss << endl;
     }
 }
 
@@ -485,43 +492,12 @@ BinaryFloatNum BinaryFloatNum::operator+(const BinaryFloatNum& num)
     num1.exp = this->exp;
     num1.mantiss = this->mantiss;
     BinaryFloatNum num2;
-    num2.minus = this->minus;
-    num2.exp = this->exp;
-    num2.mantiss = this->mantiss;
-    if (IsExpMore(num1.exp, num2.exp)) 
-    {
-        BinarySum(num2.exp, "00000001");
-        MoveNum(num2.mantiss, 1);
-        while (!IsExpMore(num1.exp, num2.exp)) 
-        {
-            BinarySum(num2.exp, "00000001");
-            MoveNum(num2.mantiss, 0);
-        }
-    }
-    else if (IsExpMore(num2.exp, num1.exp))
-    {
-        BinarySum(num1.exp, "00000001");
-        MoveNum(num1.mantiss, 1);
-        while (!IsExpMore(num2.exp, num1.exp))
-        {
-            BinarySum(num1.exp, "00000001");
-            MoveNum(num1.mantiss, 0);
-        }
-    }
-
-    string num1MantissBuff = "00000000";
-    string num2MantissBuff = "00000000";
-    for (int i = 0; i < num1.mantiss.size(); i++)
-        num1MantissBuff.push_back(num1.mantiss[i]);
-    for (int i = 0; i < num2.mantiss.size(); i++)
-        num1MantissBuff.push_back(num2.mantiss[i]);
-
-    num1MantissBuff = BinarySum(num1MantissBuff, num2MantissBuff);
-    int k = 0;
-    while (num1MantissBuff[k] == '0')
-        k++;
-    BinaryFloatNum output;
-    //output.mantiss = 
+    num2.minus = num.minus;
+    num2.exp = num.exp;
+    num2.mantiss = num.mantiss;
+    MantiissEqualize(num1,num2);
+    MantissSum(num1, num2);
+    
 
     return BinaryFloatNum();
 }
@@ -532,16 +508,123 @@ bool BinaryFloatNum::IsExpMore(string exp1, string exp2)
     {
         if (exp1[i] == '1' && exp2[i] == '0')
             return true;
+        if (exp1[i] == '0' && exp2[i] == '1')
+            return false;
     }
     return false;
 }
 void BinaryFloatNum::MoveNum(string &mantiss, int added)
 {
     string buffer = "";
-    buffer.push_back(added);
+    if(added == 1)
+        buffer.push_back('1');
+    else if((added == 0))
+        buffer.push_back('0');
     for (int i = 0; i < mantiss.size() - 1; i++)
-        buffer.push_back(this->mantiss[i]);
-    buffer.push_back('0');
+        buffer.push_back(mantiss[i]);
+    mantiss = buffer;
+}
+void BinaryFloatNum::MantiissEqualize(BinaryFloatNum& num1, BinaryFloatNum &num2)
+{
+    num2.exp = BinarySum(num2.exp, "00000001");
+    MoveNum(num2.mantiss, 1);
+    num1.exp = BinarySum(num1.exp, "00000001");
+    MoveNum(num1.mantiss, 1);
+    if (IsExpMore(num1.exp, num2.exp))
+    {
+        while (IsExpMore(num1.exp, num2.exp))
+        {
+            num2.exp = BinarySum(num2.exp, "00000001");
+            MoveNum(num2.mantiss, 0);
+        }
+    }
+    else if (IsExpMore(num2.exp, num1.exp))
+    {
+        while (IsExpMore(num2.exp, num1.exp))
+        {
+            num1.exp = BinarySum(num1.exp, "00000001");
+            MoveNum(num1.mantiss, 0);
+        }
+    }
+}
+BinaryFloatNum BinaryFloatNum::MantissSum(BinaryFloatNum& num1, BinaryFloatNum& num2)
+{
+    string num1MantissBuff = "00000000";
+    string num2MantissBuff = "00000000";
+    BinaryFloatNum output;
+    for (int i = 0; i < num1.mantiss.size(); i++)
+        num1MantissBuff.push_back(num1.mantiss[i]);
+    for (int i = 0; i < num2.mantiss.size(); i++)
+        num2MantissBuff.push_back(num2.mantiss[i]);
+    if (num1.minus[0] == '1')
+        num1MantissBuff = MakeAdditional(num1MantissBuff);
+    if (num2.minus[0] == '1')
+        num2MantissBuff = MakeAdditional(num2MantissBuff);
+
+    num1MantissBuff = BinarySum(num1MantissBuff, num2MantissBuff);
+
+    if(num1MantissBuff[0] = '1')
+    {
+        MakeAdditional(num1MantissBuff);
+        output.minus = "1";
+    }
+    int capOfZeros = 1;
+    while (num1MantissBuff[capOfZeros] == '0')
+        capOfZeros++;
+    if (capOfZeros < 8) 
+    {
+        for(int i = capOfZeros; i < 8; i++)
+            BinarySum(num1.exp, "00000001");
+    }
+    if (capOfZeros > 8)
+    {
+        int i = 8;
+        while (num1MantissBuff[i - 1] == '0') 
+        {
+            i++;
+            BinarySum(num1.exp, "11111111");
+        }
+    }
+
+
+
+    output.exp = num1.exp;
+    output.mantiss = exp127;
+    for (int i = capOfZeros - 1; i < 23 + capOfZeros; i++)
+        output.mantiss.push_back(num1MantissBuff[i]);
+    
+    return output;
+}
+
+void BinaryFloatNum::operator=(const BinaryFloatNum& num1)
+{
+    this->minus = num1.minus;
+    this->exp = num1.exp;
+    this->mantiss = num1.mantiss;
+}
+string BinaryFloatNum::MakeAdditional(string binaryNum)
+{
+    string binOne = "";
+    binOne.push_back('1');
+    for(int i = 1; i < binaryNum.size(); i++)
+        binOne.push_back('0');
+    //if (binaryNum[0] == '1')
+    
+        binaryNum = BinNumInverse(binaryNum);
+        binaryNum = BinarySum(binaryNum, binOne);
+    
+    return binaryNum;
+}
+string BinaryFloatNum::BinNumInverse(string binaryNum)
+{
+    for (int i = 1; i < binaryNum.size(); i++)
+    {
+        if (binaryNum[i] == '0')
+            binaryNum[i] = '1';
+        else if (binaryNum[i] == '1')
+            binaryNum[i] = '0';
+    }
+    return binaryNum;
 }
 
 
@@ -549,11 +632,13 @@ int main()
 {
     BinaryNum num1(30);
     num1.ConsoleOutput();
-    BinaryNum num2(5);
+    BinaryNum num2(-35);
     num2.ConsoleOutput();
-    num1 = num1 / num2;
+    num1 = num1 + num2;
     num1.ConsoleOutput();
 
-    BinaryFloatNum num3(0.00512312);
+    BinaryFloatNum num3(-0.00512312);
+    BinaryFloatNum num4(12.034);
+    num3 = num3 + num4;
 }
 
