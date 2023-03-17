@@ -352,6 +352,8 @@ class BinaryFloatNum
     BinaryFloatNum MantissSum(BinaryFloatNum& num1, BinaryFloatNum& num2);
     string MakeAdditional(string binaryNum);
     string BinNumInverse(string binaryNum);
+    float IntPartInFloat(string intPart);
+    float BehindPointPartInFloat(string behindPointPart);
 
 public:
     BinaryFloatNum();
@@ -359,6 +361,9 @@ public:
 
     BinaryFloatNum operator+(const BinaryFloatNum& num1);
     void operator=(const BinaryFloatNum& num1);
+    void ConsoleOutput();
+    float calcInDec();
+
 };
 
 BinaryFloatNum::BinaryFloatNum()
@@ -499,7 +504,7 @@ BinaryFloatNum BinaryFloatNum::operator+(const BinaryFloatNum& num)
     MantissSum(num1, num2);
     
 
-    return BinaryFloatNum();
+    return num1;
 }
 
 bool BinaryFloatNum::IsExpMore(string exp1, string exp2)
@@ -627,6 +632,78 @@ string BinaryFloatNum::BinNumInverse(string binaryNum)
     return binaryNum;
 }
 
+void BinaryFloatNum::ConsoleOutput()
+{
+    cout << this->minus << " " << this->exp << " " << this->mantiss << endl;
+}
+
+float BinaryFloatNum::calcInDec()
+{
+    float output = 0;
+    string intPart = "1";
+    string behindPointPart = "";
+    if (this->exp != this->exp127)
+    {
+        if (this->exp[0] == '0')
+        {
+            this->exp = BinarySum(this->exp, "00000001");
+            while (this->exp != this->exp127)
+            {
+                this->exp = BinarySum(this->exp, "00000001");
+                behindPointPart.push_back('0');
+            }
+            intPart = "0";
+            behindPointPart = "1";
+            for (int i = 0; i < this->mantiss.size(); i++)
+                behindPointPart.push_back(this->mantiss[i]);
+
+        }
+        else if (this->exp[0] == '1')
+        {
+            int i = 0;
+            while (this->exp != this->exp127)
+            {
+                this->exp = BinarySum(this->exp, "11111111");
+                intPart.push_back(this->mantiss[i]);
+                i++;
+            }
+            for(int j = i; j < this->mantiss.size(); j++)
+                behindPointPart.push_back(this->mantiss[j]);
+        }
+    }
+    cout << IntPartInFloat(intPart) << " " << BehindPointPartInFloat(behindPointPart)<<endl;
+    output = IntPartInFloat(intPart) + BehindPointPartInFloat(behindPointPart);
+    if (this->minus == "1")
+        output *= -1;
+    return output;
+}
+float BinaryFloatNum::IntPartInFloat(string intPart)
+{
+    float koeff = 1;
+    float buffer = 0;
+    float output = 0;
+    for (int i = intPart.size() - 1; i >= 0; i--)
+    {
+        buffer = intPart[i] - '0';
+        output += buffer * koeff;
+        koeff *= 2;
+    }
+    return output;
+}
+
+float BinaryFloatNum::BehindPointPartInFloat(string behindPointPart)
+{
+    float koeff = 1;
+    float buffer = 0;
+    float output = 0;
+    for (int i = 0; i < behindPointPart.size(); i++)
+    {
+        buffer = behindPointPart[i] - '0';
+        output += buffer * koeff;
+        koeff *= 0.5;
+    }
+    return output;
+}
 
 int main()
 {
@@ -637,8 +714,10 @@ int main()
     num1 = num1 + num2;
     num1.ConsoleOutput();
 
-    BinaryFloatNum num3(-0.00512312);
-    BinaryFloatNum num4(12.034);
+    BinaryFloatNum num3(0.625);
+    BinaryFloatNum num4(0.625);
     num3 = num3 + num4;
+    num3.ConsoleOutput();
+    cout << num3.calcInDec() << endl;
 }
 
