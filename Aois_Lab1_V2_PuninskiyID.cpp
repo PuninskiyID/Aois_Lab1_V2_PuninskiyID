@@ -12,9 +12,10 @@ class BinaryNum
 {
     const string clearBinNum = "00000000";
     const string binOne = "00000001";
+    const string minusZero = "10000000";
     string binNum = clearBinNum;
 
-    void BinaryModul(int input_num, string& output_num);
+    void BinaryModul(int decNum, string& output);
     string MakeAdditional(string binaryNum);
     string BinNumInverse(string binaryNum);
     string BinSum(string binaryNum1, string binaryNum2);
@@ -24,6 +25,11 @@ class BinaryNum
     string FindRealNum(string num);
     bool MoreThan(string num1, string num2);
     string AddZeros(string realNum);
+    void SumOfTwoOnes(string& num1, string& num2, bool &oneForNextDigit, int index);
+    void SumOfOneAndZero(string& num1, string& num2, bool &oneForNextDigit, int index);
+    void SumOfTwoZeros(string& num1, string& num2, bool &oneForNextDigit, int index);
+    void DevNumAdditing(string& num1, string &num2, string& minBuff, int& index, bool& addZeroToAnsw, string &output);
+    void MinFromMinBuffer(string& num1, string& num2, string& minBuff, bool& addZeroToAnswer, string& output);
 
 public:
 
@@ -31,6 +37,7 @@ public:
     BinaryNum(int input_num);
     float CalculateInTen();
     void ConsoleOutput();
+    int calcInDec();
 
     BinaryNum operator + (const BinaryNum& num1);
     BinaryNum operator - (const BinaryNum& num1);
@@ -45,15 +52,15 @@ void BinaryNum::ConsoleOutput()
 {
     cout << this->binNum << endl;
 }
-void BinaryNum::BinaryModul(int input_num, string& output_num)
+void BinaryNum::BinaryModul(int decNum, string& output)
 {
-    int i = output_num.size() - 1;
+    int i = output.size() - 1;
     do
     {
-        output_num[i] = char('0' + input_num % 2);
-        input_num = input_num / 2;
+        output[i] = char('0' + decNum % 2);
+        decNum = decNum / 2;
         i--;
-    } while (input_num > 0);
+    } while (decNum > 0);
 }
 string BinaryNum::BinNumInverse(string binaryNum)
 {
@@ -72,38 +79,46 @@ string BinaryNum::BinSum(string binaryNum1, string binaryNum2)
     for (int i = binaryNum1.size() - 1; i >= 0; i--) 
     {
         if (binaryNum1[i] == '1' && binaryNum2[i] == '1') 
-        {
-            if (oneForNextDigit == 0)
-            {
-                binaryNum1[i] = '0';
-                oneForNextDigit = 1;
-            }
-            else
-            {
-                binaryNum1[i] = '1';
-                oneForNextDigit = 1;
-            }  
-        }
+            SumOfTwoOnes(binaryNum1, binaryNum2, oneForNextDigit, i);
         else if ((binaryNum1[i] == '0' && binaryNum2[i] == '1') || (binaryNum1[i] == '1' && binaryNum2[i] == '0')) 
-        {
-            if (oneForNextDigit == 0)
-                binaryNum1[i] = '1';
-            else
-                binaryNum1[i] = '0';
-        }
+            SumOfOneAndZero(binaryNum1, binaryNum2, oneForNextDigit, i);
         else if (binaryNum1[i] == '0' && binaryNum2[i] == '0') 
-        {
-            if (oneForNextDigit == 0)
-                binaryNum1[i] = '0';
-            else
-            {
-                oneForNextDigit = 0;
-                binaryNum1[i] = '1';
-            }
-        }
+            SumOfTwoZeros(binaryNum1, binaryNum2, oneForNextDigit, i);
     }
     return binaryNum1;
 }
+
+void BinaryNum::SumOfTwoOnes(string& num1, string& num2, bool &oneForNextDigit, int index)
+{
+    if (oneForNextDigit == 0)
+    {
+        num1[index] = '0';
+        oneForNextDigit = 1;
+    }
+    else
+    {
+        num1[index] = '1';
+        oneForNextDigit = 1;
+    }
+}
+void BinaryNum::SumOfOneAndZero(string& num1, string& num2, bool& oneForNextDigit, int index)
+{
+    if (oneForNextDigit == 0)
+        num1[index] = '1';
+    else
+        num1[index] = '0';
+}
+void BinaryNum::SumOfTwoZeros(string& num1, string& num2, bool& oneForNextDigit, int index)
+{
+    if (oneForNextDigit == 0)
+        num1[index] = '0';
+    else
+    {
+        oneForNextDigit = 0;
+        num1[index] = '1';
+    }
+}
+
 string BinaryNum::BinMin(string binaryNum1, string binaryNum2)
 {
     string output = "";
@@ -117,13 +132,10 @@ string BinaryNum::BinMin(string binaryNum1, string binaryNum2)
     secondNumCopy = MakeAdditional(secondNumCopy);
     output = BinSum(firstNumCopy, secondNumCopy);
     output = MakeAdditional(output);
-    string MinusZero = "1";
-    for (int i = 1; i < output.size(); i++)
-        MinusZero.push_back('0');
-    if(output == MinusZero)
+    if(output == minusZero)
     {
         output = "";
-        for (int i = 0; i < MinusZero.size(); i++)
+        for (int i = 0; i < minusZero.size(); i++)
             output.push_back('0');
     }
     return output;
@@ -139,56 +151,52 @@ string BinaryNum::BinDev(string num1, string num2)
         MinBuff.push_back(num1[i]);
     bool addZeroToAnsw = false;
     while(1)
-    {
-        
-        while ((!MoreThan(MinBuff, num2))&&(MinBuff.size() < num1.size()))
-        {
-            if (i < num1.size())
-            {
-                MinBuff.push_back(num1[i]);
-                i++;
-                if (addZeroToAnsw == true)
-                    output.push_back('0');
-                addZeroToAnsw = true;
-                MinBuff = FindRealNum(MinBuff);
-                bool isThereOnes = false;
-                for(int k = i - 1; k < num1.size(); k++)
-                    if (num1[k] == '1') 
-                    { 
-                        isThereOnes = true;
-                        break;
-                    }
-                if (isThereOnes == 0)
-                {
-                    for (int k = i - 1; k < num1.size(); k++)
-                    {
-                        output.push_back('0');
-                    }
-                }
-                if (MinBuff == "1" && num1.size() - i < num2.size() && num2 != "1")
-                {
-                    for (int k = i - 1; k < num1.size(); k++)
-                    {
-                        output.push_back('0');
-                    }
-                }
-            }
-            else
-                break;
-        }
+    {       
+        DevNumAdditing(num1, num2, MinBuff, i, addZeroToAnsw, output);
         if (MoreThan(MinBuff, num2))
-        {
-            ;
-            MinBuff = BinMin(AddZeros(MinBuff), AddZeros(num2));
-            string MinBuff_plus_zero = MinBuff;
-            MinBuff = FindRealNum(MinBuff);
-            output.push_back('1');
-            addZeroToAnsw = false;
-        }
+            MinFromMinBuffer(num1, num2, MinBuff, addZeroToAnsw, output);
         else
             return output;
     }
     return string();
+}
+void BinaryNum::DevNumAdditing(string& num1, string& num2, string& minBuff, int& index, bool& addZeroToAnsw, string& output)
+{
+    while ((!MoreThan(minBuff, num2)) && (minBuff.size() < num1.size()))
+    {
+        if (index < num1.size())
+        {
+            minBuff.push_back(num1[index]);
+            index++;
+            if (addZeroToAnsw == true)
+                output.push_back('0');
+            addZeroToAnsw = true;
+            minBuff = FindRealNum(minBuff);
+            bool isThereOnes = false;
+            for (int k = index - 1; k < num1.size(); k++)
+                if (num1[k] == '1')
+                {
+                    isThereOnes = true;
+                    break;
+                }
+            if (isThereOnes == 0)
+                for (int k = index - 1; k < num1.size(); k++)
+                    output.push_back('0');
+            if (minBuff == "1" && num1.size() - index < num2.size() && num2 != "1")
+                for (int k = index - 1; k < num1.size(); k++)
+                    output.push_back('0');
+        }
+        else
+            break;
+    }
+}
+void BinaryNum::MinFromMinBuffer(string& num1, string& num2, string& minBuff, bool & addZeroToAnswer, string& output)
+{
+    minBuff = BinMin(AddZeros(minBuff), AddZeros(num2));
+    string MinBuff_plus_zero = minBuff;
+    minBuff = FindRealNum(minBuff);
+    output.push_back('1');
+    addZeroToAnswer = false;
 }
 bool BinaryNum::MoreThan(string num1, string num2)
 {
@@ -321,7 +329,7 @@ BinaryNum BinaryNum::operator/(const BinaryNum& num)
     output.binNum = BinDev(num1_no_minus, num2_no_minus);
     output.binNum = AddZeros(output.binNum);
     if ((num1[0] == '1' && num2[0] == '0') || (num1[0] == '0' && num2[0] == '1'))
-        output.binNum[0] == '1';
+        output.binNum[0] = '1';
 
     return output;
 }
@@ -333,6 +341,26 @@ string BinaryNum::AddZeros(string realNum)
     } while (realNum.size() < 8);
     return realNum;
 }
+int BinaryNum::calcInDec()
+{
+    float koeff = 1;
+    float buffer = 0;
+    float output = 0;
+    for (int i = this->binNum.size() - 1; i > 0; i--)
+    {
+        buffer = this->binNum[i] - '0';
+        output += buffer * koeff;
+        koeff *= 2;
+    }
+    if (this->binNum[0] == '1')
+        output *= -1;
+    return output;
+}
+
+
+
+///////////////////////////////////////////////////////////////////
+
 
 class BinaryFloatNum 
 {
@@ -341,10 +369,13 @@ class BinaryFloatNum
     string mantiss;
     const string clearMantiss = "00000000000000000000000"; //23
     const string exp127 = "01111111"; //8
+    const string clearExp = "00000000";
+    const string binOne = "00000001";
+    const string binMinusOne = "11111111";
 
-    void SeparateParts(float DecNum, string &intPart, string &behindPoinPart);
-    void MakeIntBinary(int input_num, string& output_num);
-    void MakeBehindPointBinary(float input_num, string& output_num);
+    void SeparateParts(float decNum, string &intPart, string &behindPoinPart);
+    void MakeIntBinary(int decNum, string& output);
+    void MakeBehindPointBinary(float DecNum, string& output);
     string BinarySum(string binaryNum1, string binaryNum2);
     bool IsExpMore(string exp1, string exp2);
     void MoveNum(string &mantiss, int added);
@@ -354,6 +385,14 @@ class BinaryFloatNum
     string BinNumInverse(string binaryNum);
     float IntPartInFloat(string intPart);
     float BehindPointPartInFloat(string behindPointPart);
+    void FillByNumWithIntPart(string &intPart, string &behindPointPart, int &index);
+    void FillByNumWhithNoIntPart(string& intPart, string& behindPointPart, int& index);
+    void SumOfTwoOnes(string& num1, string& num2, bool& oneForNextDigit, int index);
+    void SumOfOneAndZero(string& num1, string& num2, bool& oneForNextDigit, int index);
+    void SumOfTwoZeros(string& num1, string& num2, bool& oneForNextDigit, int index);
+    void ConvertToStandartFormat(string& num1MantissBuff, BinaryFloatNum& num1, BinaryFloatNum& output);
+    void MultByExpWithNegativeDegree(BinaryFloatNum& copyOfMainNum, string& intPart, string& behindPointPart);
+    void MultByExpWithPositiveDegree(BinaryFloatNum& copyOfMainNum, string& intPart, string& behindPointPart);
 
 public:
     BinaryFloatNum();
@@ -372,122 +411,131 @@ BinaryFloatNum::BinaryFloatNum()
     this->exp = this->exp127;
     this->mantiss = this->clearMantiss;
 }
-BinaryFloatNum::BinaryFloatNum(float input_num)
+BinaryFloatNum::BinaryFloatNum(float decNum)
 {
     this->exp = exp127;
-    if (input_num < 0)
+    if (decNum < 0)
+    {
         this->minus = '1';
+        decNum *= -1;
+    }
     else
         this->minus = '0';
     string intPart = clearMantiss;
-    string beforePointPart = clearMantiss;
-    SeparateParts(input_num, intPart, beforePointPart);
-    cout << intPart << " " << beforePointPart << endl;
+    string behindPointPart = clearMantiss;
+    SeparateParts(decNum, intPart, behindPointPart);
     int i = 0;
     if(intPart != this->clearMantiss)
-    {
-        while (intPart[i] == '0')
-            i++;
-        for (int j = i + 1; j < intPart.size(); j++)
-        {
-            this->mantiss.push_back(intPart[j]);
-            this->exp = BinarySum("00000001", this->exp);
-        }
-        int mantissSize = this->mantiss.size();
-        for(int j = 0; j < 23 - mantissSize; j++)
-            this->mantiss.push_back(beforePointPart[j]);
-        cout << this->minus << " " << this->exp << " " << this->mantiss << endl;
-    }
+        FillByNumWithIntPart(intPart, behindPointPart, i);
     else 
+        FillByNumWhithNoIntPart(intPart, behindPointPart, i);
+}
+void BinaryFloatNum::FillByNumWithIntPart(string &intPart, string &behindPointPart, int &index)
+{
+    while (intPart[index] == '0')
+        index++;
+    for (int j = index + 1; j < intPart.size(); j++)
     {
-        while (beforePointPart[i] == '0'){
-            i++;
-            this->exp = BinarySum("11111111", this->exp);
-        }
-        this->exp = BinarySum("11111111", this->exp);
-        for (int j = i + 1; j < beforePointPart.size(); j++)
-            this->mantiss.push_back(beforePointPart[j]);
-        for (int j = this->mantiss.size(); j < 23; j++)
-        {
-            this->mantiss.push_back('0');
-        }
-
-        cout << this->minus << " " << this->exp << " " << this->mantiss << endl;
+        this->mantiss.push_back(intPart[j]);
+        this->exp = BinarySum(binOne, this->exp);
+    }
+    int mantissSize = this->mantiss.size();
+    for (int j = 0; j < 23 - mantissSize; j++)
+        this->mantiss.push_back(behindPointPart[j]);
+}
+void BinaryFloatNum::FillByNumWhithNoIntPart(string& intPart, string& behindPointPart, int& index)
+{
+    while (behindPointPart[index] == '0') {
+        index++;
+        this->exp = BinarySum(binMinusOne, this->exp);
+    }
+    this->exp = BinarySum(binMinusOne, this->exp);
+    for (int j = index + 1; j < behindPointPart.size(); j++)
+        this->mantiss.push_back(behindPointPart[j]);
+    for (int j = this->mantiss.size(); j < 23; j++)
+    {
+        this->mantiss.push_back('0');
     }
 }
 
-void BinaryFloatNum::SeparateParts(float DecNum, string& intPart, string& behindPoinPart)
+void BinaryFloatNum::SeparateParts(float decNum, string& intPart, string& behindPoinPart)
 {
     float DecIntPart;
-    float DecBehindPoinPart = modf(DecNum, &DecIntPart);
-    cout << DecBehindPoinPart << endl;
+    float DecBehindPoinPart = modf(decNum, &DecIntPart);
     MakeIntBinary(DecIntPart, intPart);
     MakeBehindPointBinary(DecBehindPoinPart, behindPoinPart);
 }
 
-void BinaryFloatNum::MakeIntBinary(int input_num, string& output_num)
+void BinaryFloatNum::MakeIntBinary(int decNum, string& output)
 {
-    int i = output_num.size() - 1;
+    int i = output.size() - 1;
     do
     {
-        output_num[i] = char('0' + input_num % 2);
-        input_num = input_num / 2;
+        output[i] = char('0' + decNum % 2);
+        decNum = decNum / 2;
         i--;
-    } while (input_num > 0);
+    } while (decNum > 0);
 }
-void BinaryFloatNum::MakeBehindPointBinary(float input_num, string& output_num)
+void BinaryFloatNum::MakeBehindPointBinary(float numLowerThanOne, string& output)
 {
-    if (input_num < 0)
-        input_num *= -1;
+    if (numLowerThanOne < 0)
+        numLowerThanOne *= -1;
     for (int i = 0; i < 23; i++)
     {
-        input_num *= 2;
-        if (input_num >= 1)
+        numLowerThanOne *= 2;
+        if (numLowerThanOne >= 1)
         {
-            input_num -= 1;
-            output_num[i] = '1';
+            numLowerThanOne -= 1;
+            output[i] = '1';
         }
         else
-            output_num[i] = '0';
+            output[i] = '0';
     }
 }
+
 string BinaryFloatNum::BinarySum(string binaryNum1, string binaryNum2)
 {
     bool oneForNextDigit = 0;
     for (int i = binaryNum1.size() - 1; i >= 0; i--)
     {
         if (binaryNum1[i] == '1' && binaryNum2[i] == '1')
-        {
-            if (oneForNextDigit == 0)
-            {
-                binaryNum1[i] = '0';
-                oneForNextDigit = 1;
-            }
-            else
-            {
-                binaryNum1[i] = '1';
-                oneForNextDigit = 1;
-            }
-        }
+            SumOfTwoOnes(binaryNum1, binaryNum2, oneForNextDigit, i);
         else if ((binaryNum1[i] == '0' && binaryNum2[i] == '1') || (binaryNum1[i] == '1' && binaryNum2[i] == '0'))
-        {
-            if (oneForNextDigit == 0)
-                binaryNum1[i] = '1';
-            else
-                binaryNum1[i] = '0';
-        }
+            SumOfOneAndZero(binaryNum1, binaryNum2, oneForNextDigit, i);
         else if (binaryNum1[i] == '0' && binaryNum2[i] == '0')
-        {
-            if (oneForNextDigit == 0)
-                binaryNum1[i] = '0';
-            else
-            {
-                oneForNextDigit = 0;
-                binaryNum1[i] = '1';
-            }
-        }
+            SumOfTwoZeros(binaryNum1, binaryNum2, oneForNextDigit, i);
     }
     return binaryNum1;
+}
+void BinaryFloatNum::SumOfTwoOnes(string& num1, string& num2, bool& oneForNextDigit, int index)
+{
+    if (oneForNextDigit == 0)
+    {
+        num1[index] = '0';
+        oneForNextDigit = 1;
+    }
+    else
+    {
+        num1[index] = '1';
+        oneForNextDigit = 1;
+    }
+}
+void BinaryFloatNum::SumOfOneAndZero(string& num1, string& num2, bool& oneForNextDigit, int index)
+{
+    if (oneForNextDigit == 0)
+        num1[index] = '1';
+    else
+        num1[index] = '0';
+}
+void BinaryFloatNum::SumOfTwoZeros(string& num1, string& num2, bool& oneForNextDigit, int index)
+{
+    if (oneForNextDigit == 0)
+        num1[index] = '0';
+    else
+    {
+        oneForNextDigit = 0;
+        num1[index] = '1';
+    }
 }
 
 BinaryFloatNum BinaryFloatNum::operator+(const BinaryFloatNum& num)
@@ -496,17 +544,12 @@ BinaryFloatNum BinaryFloatNum::operator+(const BinaryFloatNum& num)
     num1.minus = this->minus;
     num1.exp = this->exp;
     num1.mantiss = this->mantiss;
-    BinaryFloatNum num2;
-    num2.minus = num.minus;
-    num2.exp = num.exp;
-    num2.mantiss = num.mantiss;
+    BinaryFloatNum num2 = num;
     MantiissEqualize(num1,num2);
-    MantissSum(num1, num2);
+    num1 = MantissSum(num1, num2);
     
-
     return num1;
 }
-
 bool BinaryFloatNum::IsExpMore(string exp1, string exp2)
 {
     for (int i = 0; i < exp1.size(); i++) 
@@ -531,15 +574,15 @@ void BinaryFloatNum::MoveNum(string &mantiss, int added)
 }
 void BinaryFloatNum::MantiissEqualize(BinaryFloatNum& num1, BinaryFloatNum &num2)
 {
-    num2.exp = BinarySum(num2.exp, "00000001");
+    num2.exp = BinarySum(num2.exp, binOne);
     MoveNum(num2.mantiss, 1);
-    num1.exp = BinarySum(num1.exp, "00000001");
+    num1.exp = BinarySum(num1.exp, binOne);
     MoveNum(num1.mantiss, 1);
     if (IsExpMore(num1.exp, num2.exp))
     {
         while (IsExpMore(num1.exp, num2.exp))
         {
-            num2.exp = BinarySum(num2.exp, "00000001");
+            num2.exp = BinarySum(num2.exp, binOne);
             MoveNum(num2.mantiss, 0);
         }
     }
@@ -547,58 +590,58 @@ void BinaryFloatNum::MantiissEqualize(BinaryFloatNum& num1, BinaryFloatNum &num2
     {
         while (IsExpMore(num2.exp, num1.exp))
         {
-            num1.exp = BinarySum(num1.exp, "00000001");
+            num1.exp = BinarySum(num1.exp, binOne);
             MoveNum(num1.mantiss, 0);
         }
     }
 }
 BinaryFloatNum BinaryFloatNum::MantissSum(BinaryFloatNum& num1, BinaryFloatNum& num2)
 {
-    string num1MantissBuff = "00000000";
-    string num2MantissBuff = "00000000";
+    string num1MantissBuff = clearExp;
+    string num2MantissBuff = clearExp;
     BinaryFloatNum output;
     for (int i = 0; i < num1.mantiss.size(); i++)
         num1MantissBuff.push_back(num1.mantiss[i]);
     for (int i = 0; i < num2.mantiss.size(); i++)
         num2MantissBuff.push_back(num2.mantiss[i]);
-    if (num1.minus[0] == '1')
+    if (num1.minus == "1")
         num1MantissBuff = MakeAdditional(num1MantissBuff);
-    if (num2.minus[0] == '1')
+    if (num2.minus == "1")
         num2MantissBuff = MakeAdditional(num2MantissBuff);
 
     num1MantissBuff = BinarySum(num1MantissBuff, num2MantissBuff);
 
-    if(num1MantissBuff[0] = '1')
+    if(num1MantissBuff[0] == '1')
     {
-        MakeAdditional(num1MantissBuff);
+        num1MantissBuff = MakeAdditional(num1MantissBuff);
         output.minus = "1";
     }
+    ConvertToStandartFormat(num1MantissBuff, num1, output);
+    return output;
+}
+void BinaryFloatNum::ConvertToStandartFormat(string &num1MantissBuff, BinaryFloatNum &num1, BinaryFloatNum &output)
+{
     int capOfZeros = 1;
     while (num1MantissBuff[capOfZeros] == '0')
         capOfZeros++;
-    if (capOfZeros < 8) 
+    if (capOfZeros < 7)
     {
-        for(int i = capOfZeros; i < 8; i++)
-            BinarySum(num1.exp, "00000001");
+        for (int i = capOfZeros; i < 8; i++)
+            BinarySum(num1.exp, binOne);
     }
-    if (capOfZeros > 8)
+    if (capOfZeros > 7)
     {
-        int i = 8;
-        while (num1MantissBuff[i - 1] == '0') 
+        int i = 7;
+        while (num1MantissBuff[i] == '0')
         {
             i++;
-            BinarySum(num1.exp, "11111111");
+            num1.exp = BinarySum(num1.exp, binMinusOne);
         }
     }
-
-
-
     output.exp = num1.exp;
-    output.mantiss = exp127;
-    for (int i = capOfZeros - 1; i < 23 + capOfZeros; i++)
+    output.mantiss = "";
+    for (int i = capOfZeros + 1; i < 23 + capOfZeros; i++)
         output.mantiss.push_back(num1MantissBuff[i]);
-    
-    return output;
 }
 
 void BinaryFloatNum::operator=(const BinaryFloatNum& num1)
@@ -613,7 +656,6 @@ string BinaryFloatNum::MakeAdditional(string binaryNum)
     binOne.push_back('1');
     for(int i = 1; i < binaryNum.size(); i++)
         binOne.push_back('0');
-    //if (binaryNum[0] == '1')
     
         binaryNum = BinNumInverse(binaryNum);
         binaryNum = BinarySum(binaryNum, binOne);
@@ -639,43 +681,52 @@ void BinaryFloatNum::ConsoleOutput()
 
 float BinaryFloatNum::calcInDec()
 {
+    BinaryFloatNum copyOfMainNum;
+    copyOfMainNum.minus = this->minus;
+    copyOfMainNum.exp = this->exp;
+    copyOfMainNum.mantiss = this->mantiss;
     float output = 0;
     string intPart = "1";
     string behindPointPart = "";
-    if (this->exp != this->exp127)
+    if (copyOfMainNum.exp != this->exp127)
     {
-        if (this->exp[0] == '0')
-        {
-            this->exp = BinarySum(this->exp, "00000001");
-            while (this->exp != this->exp127)
-            {
-                this->exp = BinarySum(this->exp, "00000001");
-                behindPointPart.push_back('0');
-            }
-            intPart = "0";
-            behindPointPart = "1";
-            for (int i = 0; i < this->mantiss.size(); i++)
-                behindPointPart.push_back(this->mantiss[i]);
-
-        }
-        else if (this->exp[0] == '1')
-        {
-            int i = 0;
-            while (this->exp != this->exp127)
-            {
-                this->exp = BinarySum(this->exp, "11111111");
-                intPart.push_back(this->mantiss[i]);
-                i++;
-            }
-            for(int j = i; j < this->mantiss.size(); j++)
-                behindPointPart.push_back(this->mantiss[j]);
-        }
+        if (copyOfMainNum.exp[0] == '0')
+            MultByExpWithNegativeDegree(copyOfMainNum, intPart, behindPointPart);
+        else if (copyOfMainNum.exp[0] == '1')
+            MultByExpWithPositiveDegree(copyOfMainNum, intPart, behindPointPart);
     }
-    cout << IntPartInFloat(intPart) << " " << BehindPointPartInFloat(behindPointPart)<<endl;
+    else
+        for (int i = 0; i < copyOfMainNum.mantiss.size(); i++)
+            behindPointPart.push_back(copyOfMainNum.mantiss[i]);
     output = IntPartInFloat(intPart) + BehindPointPartInFloat(behindPointPart);
     if (this->minus == "1")
         output *= -1;
     return output;
+}
+void BinaryFloatNum::MultByExpWithNegativeDegree(BinaryFloatNum &copyOfMainNum, string &intPart, string &behindPointPart)
+{
+    copyOfMainNum.exp = BinarySum(copyOfMainNum.exp, binOne);
+    while (copyOfMainNum.exp != this->exp127)
+    {
+        copyOfMainNum.exp = BinarySum(copyOfMainNum.exp, binMinusOne);
+        behindPointPart.push_back('0');
+    }
+    intPart = "0";
+    behindPointPart.push_back('1');
+    for (int i = 0; i < copyOfMainNum.mantiss.size(); i++)
+        behindPointPart.push_back(copyOfMainNum.mantiss[i]);
+}
+void BinaryFloatNum::MultByExpWithPositiveDegree(BinaryFloatNum& copyOfMainNum, string& intPart, string& behindPointPart)
+{
+    int i = 0;
+    while (copyOfMainNum.exp != this->exp127)
+    {
+        copyOfMainNum.exp = BinarySum(copyOfMainNum.exp, binMinusOne);
+        intPart.push_back(copyOfMainNum.mantiss[i]);
+        i++;
+    }
+    for (int j = i; j < copyOfMainNum.mantiss.size(); j++)
+        behindPointPart.push_back(copyOfMainNum.mantiss[j]);
 }
 float BinaryFloatNum::IntPartInFloat(string intPart)
 {
@@ -693,7 +744,7 @@ float BinaryFloatNum::IntPartInFloat(string intPart)
 
 float BinaryFloatNum::BehindPointPartInFloat(string behindPointPart)
 {
-    float koeff = 1;
+    float koeff = 0.5;
     float buffer = 0;
     float output = 0;
     for (int i = 0; i < behindPointPart.size(); i++)
@@ -707,17 +758,68 @@ float BinaryFloatNum::BehindPointPartInFloat(string behindPointPart)
 
 int main()
 {
-    BinaryNum num1(30);
+    cout << "-------------<Tests>-------------" << endl;
+    cout << "Input first int num:" << endl;
+    int intNum1 = 0, intNum2 = 0;
+    cin >> intNum1;
+    BinaryNum num1(intNum1);
+    cout << "Binary form:" << endl;
     num1.ConsoleOutput();
-    BinaryNum num2(-35);
+    cout << endl;
+    cout << "Input second int num:" << endl;
+    cin >> intNum2;
+    BinaryNum num2(intNum2);
+    cout << "Binary form:" << endl;
     num2.ConsoleOutput();
-    num1 = num1 + num2;
-    num1.ConsoleOutput();
+    
+    cout << "---------------------------------" << endl;
+    cout << endl;
+    cout <<"          " << "Sum:" << endl;
+    
+    BinaryNum output;
+    output = num1 + num2;
+    output.ConsoleOutput();
+    cout << intNum1 << " + " << intNum2 << " = " << output.calcInDec()<< endl;
+    
+    cout << "          " << "Diff:" << endl;
+    output = num1 - num2;
+    output.ConsoleOutput();
+    cout << intNum1 << " - " << intNum2 << " = " << output.calcInDec() << endl;
 
-    BinaryFloatNum num3(0.625);
-    BinaryFloatNum num4(0.625);
-    num3 = num3 + num4;
-    num3.ConsoleOutput();
-    cout << num3.calcInDec() << endl;
+    cout << "          " << "Mult:" << endl;
+    output = num1 * num2;
+    output.ConsoleOutput();
+    cout << intNum1 << " * " << intNum2 << " = " << output.calcInDec() << endl;
+
+    cout << "          " << "Dev:" << endl;
+    output = num1 / num2;
+    output.ConsoleOutput();
+    cout << intNum1 << " / " << intNum2 << " = " << output.calcInDec() << endl;
+    
+    cout << "---------------------------------" << endl;
+
+    cout << "Input first float num:" << endl;
+    float floatNum1 = 0, floatNum2 = 0;
+    cin >> floatNum1;
+    BinaryFloatNum num1F(floatNum1);
+    cout << "Binary form:" << endl;
+    num1F.ConsoleOutput();
+    cout << endl;
+    cout << "Input second int num:" << endl;
+    cin >> floatNum2;
+    BinaryFloatNum num2F(floatNum2);
+    cout << "Binary form:" << endl;
+    num2F.ConsoleOutput();
+
+    cout << "---------------------------------" << endl;
+
+    cout << "Sum:" << endl;
+
+    BinaryFloatNum outputF;
+    outputF = num1F + num2F;
+    outputF.ConsoleOutput();
+    cout << floatNum1 << " + " << floatNum2 << " = " << outputF.calcInDec() << endl;
+
+
 }
 
